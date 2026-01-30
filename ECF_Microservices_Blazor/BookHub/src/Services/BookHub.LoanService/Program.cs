@@ -46,10 +46,11 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseSwagger();
-app.UseSwaggerUI(c =>
+if (app.Environment.IsDevelopment())
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookHub Loan Service V1");
-});
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 
 app.UseCors("AllowAll");
