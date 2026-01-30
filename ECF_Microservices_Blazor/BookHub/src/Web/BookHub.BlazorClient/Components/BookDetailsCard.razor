@@ -1,0 +1,38 @@
+<div class="card">
+    <div class="card-header">
+        <h5>@Book.Title</h5>
+    </div>
+    <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">@Book.Author</h6>
+        <p class="card-text">@Book.Description</p>
+        <p>
+            <small class="text-muted">@Book.Category - @Book.PublicationYear</small>
+        </p>
+        <span class="badge @(Book.IsAvailable ? "bg-success" : "bg-danger")">
+            @(Book.IsAvailable ? $"{Book.AvailableCopies} disponible(s)" : "Indisponible")
+        </span>
+        <div class="mt-3">
+            <button class="btn btn-primary" @onclick="HandleBorrow" disabled="@(Book == null)">
+                Emprunter
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public BookDto Book { get; set; } = new(
+        Guid.Empty, "", "", "", "", "", 0, "", true, 0, 0
+    );
+
+    [Parameter]
+    public EventCallback OnBorrow { get; set; }
+
+    private async Task HandleBorrow()
+    {
+        if (Book != null && OnBorrow.HasDelegate)
+        {
+            await OnBorrow.InvokeAsync();
+        }
+    }
+}

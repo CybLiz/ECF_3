@@ -1,12 +1,69 @@
 @page "/books/{Id:guid}"
+@inject IBookService BookService
 
-<PageTitle>Detail du livre - BookHub</PageTitle>
+<PageTitle>Détail du livre - BookHub</PageTitle>
 
-<a href="/books" class="btn btn-secondary">
+<a href="/books" class="btn btn-secondary mb-3">
     <i class="bi bi-arrow-left"></i> Retour au catalogue
 </a>
+
+@if (book == null)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+    </div>
+}
+else
+{
+    <BookDetailsCard 
+        Book="book"
+        OnBorrow="BorrowTest" />
+}
 
 @code {
     [Parameter]
     public Guid Id { get; set; }
+
+    private BookDto? book;
+
+    protected override async Task OnInitializedAsync()
+    {
+        book = await BookService.GetBookByIdAsync(Id);
+    }
+
+    private Task BorrowTest()
+    {
+        Console.WriteLine($"[TEST] Emprunt du livre : {book?.Title}");
+        return Task.CompletedTask;
+    }
+ /*
+    // Version réelle mais non fonctionnelle 
+    private async Task BorrowBook()
+    {
+        if (book == null)
+            return;
+
+        if (!AuthState.IsAuthenticated)
+        {
+            Console.WriteLine("Utilisateur non authentifié !");
+            return;
+        }
+
+        var createLoan = new CreateLoanDto(
+            UserId: AuthState.CurrentUser!.Id,
+            BookId: book.Id
+        );
+
+        try
+        {
+            var loan = await LoanService.CreateLoanAsync(createLoan);
+            Console.WriteLine($"Emprunt créé pour {book.Title} (Loan ID: {loan.Id})");
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de l'emprunt : {ex.Message}");
+        }
+    }
+    */
 }
