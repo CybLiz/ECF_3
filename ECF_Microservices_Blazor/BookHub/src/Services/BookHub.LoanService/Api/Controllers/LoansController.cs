@@ -40,18 +40,30 @@ public class LoansController : ControllerBase
     [HttpGet("overdue")]
     public async Task<ActionResult<IEnumerable<LoanDto>>> GetOverdue(CancellationToken cancellationToken)
     {
-        return StatusCode(501, "Not implemented");
+        var loans = await _loanService.GetOverdueLoansAsync(cancellationToken);
+        if(loans == null || !loans.Any())
+        {
+            return NoContent();
+        }
+        return Ok(loans);
     }
 
     [HttpPost]
     public async Task<ActionResult<LoanDto>> Create([FromBody] CreateLoanDto dto, CancellationToken cancellationToken)
     {
-        return StatusCode(501, "Not implemented");
+    var loan = await _loanService.CreateLoanAsync(dto, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = loan.Id }, loan);
     }
 
     [HttpPut("{id:guid}/return")]
     public async Task<ActionResult<LoanDto>> Return(Guid id, CancellationToken cancellationToken)
     {
-        return StatusCode(501, "Not implemented");
+        var loan = await _loanService.ReturnLoanAsync(id, cancellationToken);
+        if (loan == null) return NotFound();
+        if(loan.Status == LoanStatus.Returned)
+        {
+            return BadRequest("Loan has already been returned.");
+        }
+        return Ok(loan);
     }
 }
