@@ -77,7 +77,9 @@ public class LoansController : ControllerBase
     [HttpPut("{id:guid}/return")]
     public async Task<ActionResult<LoanDto>> Return(Guid id, CancellationToken cancellationToken)
     {
-        var loan = await _loanService.ReturnLoanAsync(id, cancellationToken);
+        var token = Request.Headers["Authorization"].ToString();
+
+        var loan = await _loanService.ReturnLoanAsync(id, token, cancellationToken);
         if (loan == null) return NotFound();
         if(loan.Status == LoanStatus.Returned)
         {

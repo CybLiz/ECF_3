@@ -41,13 +41,14 @@ namespace BookHubGateway.Controllers
             return await _loanClient.GetListRequest("/overdue");
         }
 
-        //  /loans/{id}/return sans body
         [HttpPut("{id:guid}/return")]
         public async Task<LoanDto> Return(Guid id)
         {
-            return await _loanClient.PostRequest($"/{id}/return");
-        }
+            var token = Request.Headers["Authorization"].ToString();
+            _loanClient.SetAuthorizationHeader(token);
 
+            return await _loanClient.PutRequest($"/{id}/return");
+        }
 
         [HttpGet("user/{userId:guid}")]
         public async Task<List<LoanDto>> GetByUserId(Guid userId)

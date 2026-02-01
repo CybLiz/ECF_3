@@ -5,6 +5,7 @@ using BookHub.BlazorClient.Services;
 using Blazored.LocalStorage;
 using System.Net.Http;
 
+
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
@@ -21,5 +22,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<AuthStateProvider>();
 
 builder.Services.AddScoped<IBookService, BookService>();
+
+builder.Services.AddScoped<ILoanService, LoanService>();
+
 
 await builder.Build().RunAsync();

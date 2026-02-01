@@ -1,14 +1,23 @@
 @page "/my-loans"
 @using BookHub.Shared.DTOs
+@inject ILoanService LoanService
+@inject AuthStateProvider AuthState
 
 <PageTitle>Mes Emprunts - BookHub</PageTitle>
 
 <h1>Mes Emprunts</h1>
 
 <h3>Emprunts en cours</h3>
-@if (activeLoans == null || !activeLoans.Any())
+
+@if (isLoading)
 {
-    <div class="alert alert-info">Aucun emprunt en cours!</div>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+    </div>
+}
+else if (activeLoans == null || !activeLoans.Any())
+{
+    <div class="alert alert-info">Aucun emprunt en cours.</div>
 }
 else
 {
@@ -31,7 +40,8 @@ else
                     <td>@loan.DueDate.ToShortDateString()</td>
                     <td>@loan.Status</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" @onclick="() => ReturnLoan(loan)">
+                        <button class="btn btn-sm btn-primary"
+                                @onclick="() => ReturnLoan(loan)">
                             Retourner
                         </button>
                     </td>
@@ -42,7 +52,14 @@ else
 }
 
 <h3>Historique des emprunts</h3>
-@if (pastLoans == null || !pastLoans.Any())
+
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+    </div>
+}
+else if (pastLoans == null || !pastLoans.Any())
 {
     <div class="alert alert-info">Aucun emprunt passé.</div>
 }
@@ -72,61 +89,65 @@ else
 }
 
 @code {
+    private bool isLoading;
+    private List<LoanDto> loans = new();
     private List<LoanDto> activeLoans = new();
     private List<LoanDto> pastLoans = new();
 
-    protected override void OnInitialized()
-
+    protected override async Task OnInitializedAsync()
     {
-        // Etant la feature d'emprunt non fonctionnelle, je simule des emprunts!'
-        // Emprunts en cours
-        activeLoans.Add(new LoanDto(
-            Id: Guid.NewGuid(),
-            UserId: Guid.NewGuid(),
-            BookId: Guid.NewGuid(),
-            BookTitle: "Livre Actif",
-            UserEmail: "test@bookhub.com",
-            LoanDate: DateTime.Now.AddDays(-2),
-            DueDate: DateTime.Now.AddDays(12),
-            ReturnDate: null,
-            Status: BookHub.Shared.DTOs.LoanStatus.Active,
-            PenaltyAmount: 0
-        ));
+        if (!AuthState.IsAuthenticated)
+            return;
 
-        // Historique des emprunts
-        pastLoans.Add(new LoanDto(
-            Id: Guid.NewGuid(),
-            UserId: Guid.NewGuid(),
-            BookId: Guid.NewGuid(),
-            BookTitle: "Livre Ancien 1",
-            UserEmail: "test@bookhub.com",
-            LoanDate: DateTime.Now.AddMonths(-2),
-            DueDate: DateTime.Now.AddMonths(-2).AddDays(14),
-            ReturnDate: DateTime.Now.AddMonths(-2).AddDays(14),
-            Status: BookHub.Shared.DTOs.LoanStatus.Returned,
-            PenaltyAmount: 0
-        ));
-
-        pastLoans.Add(new LoanDto(
-            Id: Guid.NewGuid(),
-            UserId: Guid.NewGuid(),
-            BookId: Guid.NewGuid(),
-            BookTitle: "Livre Ancien 2",
-            UserEmail: "test@bookhub.com",
-            LoanDate: DateTime.Now.AddMonths(-1),
-            DueDate: DateTime.Now.AddMonths(-1).AddDays(14),
-            ReturnDate: DateTime.Now.AddMonths(-1).AddDays(14),
-            Status: BookHub.Shared.DTOs.LoanStatus.Returned,
-            PenaltyAmount: 0
-        ));
+        await LoadLoans();
     }
 
-    private void ReturnLoan(LoanDto loan)
+    private async Task LoadLoans()
     {
-        Console.WriteLine($"[TEST] Retour du livre : {loan.BookTitle}");
+        isLoading = true;
 
-        // Mise à jour locale
-        activeLoans.Remove(loan);
-        pastLoans.Add(loan with { Status = BookHub.Shared.DTOs.LoanStatus.Returned, ReturnDate = DateTime.Now });
+        try
+        {
+            var userId = AuthState.CurrentUser!.Id;
+            loans = (await LoanService.GetUserLoansAsync(userId)).ToList();
+
+            activeLoans = loans
+                .Where(l => l.Status == BookHub.Shared.DTOs.LoanStatus.Active)
+                .ToList();
+
+            pastLoans = loans
+                .Where(l => l.Status == BookHub.Shared.DTOs.LoanStatus.Returned)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur chargement emprunts : {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
+
+    private async Task ReturnLoan(LoanDto loan)
+{
+    try
+    {
+        var returnedLoan = await LoanService.ReturnLoanAsync(loan.Id);
+
+        if (returnedLoan != null)
+        {
+            activeLoans.Remove(loan);
+            pastLoans.Add(returnedLoan);
+        }
+            await LoadLoans();
+
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Erreur retour : {ex.Message}");
+    }
+
+}
+
 }

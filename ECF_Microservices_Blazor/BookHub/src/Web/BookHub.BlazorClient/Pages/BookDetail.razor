@@ -1,5 +1,8 @@
 @page "/books/{Id:guid}"
 @inject IBookService BookService
+@inject ILoanService LoanService
+@inject AuthStateProvider AuthState
+@inject NavigationManager NavigationManager
 
 <PageTitle>Détail du livre - BookHub</PageTitle>
 
@@ -17,7 +20,13 @@ else
 {
     <BookDetailsCard 
         Book="book"
-        OnBorrow="BorrowTest" />
+        OnBorrow="() => showConfirmationModal = true" />
+
+    <ConfirmationModal 
+        Title="Emprunter ce livre ?"
+        Message="Voulez-vous vraiment emprunter ce livre ?"
+        OnConfirmed="BorrowBook"
+        @bind-IsVisible="showConfirmationModal" />
 }
 
 @code {
@@ -25,27 +34,18 @@ else
     public Guid Id { get; set; }
 
     private BookDto? book;
+    private bool showConfirmationModal = false;
 
     protected override async Task OnInitializedAsync()
     {
         book = await BookService.GetBookByIdAsync(Id);
     }
 
-    private Task BorrowTest()
-    {
-        Console.WriteLine($"[TEST] Emprunt du livre : {book?.Title}");
-        return Task.CompletedTask;
-    }
- /*
-    // Version réelle mais non fonctionnelle 
     private async Task BorrowBook()
     {
-        if (book == null)
-            return;
-
-        if (!AuthState.IsAuthenticated)
+        if (book == null || !AuthState.IsAuthenticated)
         {
-            Console.WriteLine("Utilisateur non authentifié !");
+            Console.WriteLine("Impossible d'emprunter : utilisateur non authentifié ou livre inexistant");
             return;
         }
 
@@ -59,11 +59,12 @@ else
             var loan = await LoanService.CreateLoanAsync(createLoan);
             Console.WriteLine($"Emprunt créé pour {book.Title} (Loan ID: {loan.Id})");
 
+            // Redirection vers Mes Emprunts
+            NavigationManager.NavigateTo("/my-loans");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors de l'emprunt : {ex.Message}");
         }
     }
-    */
 }

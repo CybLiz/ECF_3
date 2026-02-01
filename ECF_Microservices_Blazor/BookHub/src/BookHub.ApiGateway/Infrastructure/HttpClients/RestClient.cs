@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using System.Net.Http.Headers;
 
 namespace BookHubGateway.Infrastructure.HttpClients
 {
-
     public class RestClient<TSend, TReceive>
     {
         private readonly HttpClient _client;
@@ -29,29 +28,7 @@ namespace BookHubGateway.Infrastructure.HttpClients
             _options.Converters.Add(new JsonStringEnumConverter());
         }
 
-        // GET list
-        public async Task<List<TSend>> GetListRequest(string url)
-        {
-            var response = await _client.GetAsync(_baseUrl + url);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<TSend>>(json, _options)
-                   ?? throw new Exception("Result null");
-        }
-
-
-        // GET single item
-        public async Task<TSend> GetRequest(string url)
-        {
-            var response = await _client.GetAsync(_baseUrl + url);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<TSend>(json, _options)
-                   ?? throw new Exception("Result null");
-        }
-
+        #region Authorization
         public void SetAuthorizationHeader(string? authorizationHeader)
         {
             _client.DefaultRequestHeaders.Authorization = null;
@@ -62,9 +39,32 @@ namespace BookHubGateway.Infrastructure.HttpClients
                     AuthenticationHeaderValue.Parse(authorizationHeader);
             }
         }
+        #endregion
 
+        #region GET
+        public async Task<List<TSend>> GetListRequest(string url)
+        {
+            var response = await _client.GetAsync(_baseUrl + url);
+            response.EnsureSuccessStatusCode();
 
-        // POST avec body
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<List<TSend>>(json, _options)
+                   ?? throw new Exception("Result null");
+        }
+
+        public async Task<TSend> GetRequest(string url)
+        {
+            var response = await _client.GetAsync(_baseUrl + url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TSend>(json, _options)
+                   ?? throw new Exception("Result null");
+        }
+        #endregion
+
+        #region POST
+        // POST with body and expecting response
         public async Task<TSend> PostRequest<TBody>(string url, TBody body)
         {
             StringContent? content = null;
@@ -82,7 +82,7 @@ namespace BookHubGateway.Infrastructure.HttpClients
                    ?? throw new Exception("Result null");
         }
 
-        // POST sans body
+        // POST without body but expecting response
         public async Task<TSend> PostRequest(string url)
         {
             var response = await _client.PostAsync(_baseUrl + url, null);
@@ -93,7 +93,30 @@ namespace BookHubGateway.Infrastructure.HttpClients
                    ?? throw new Exception("Result null");
         }
 
-        // PUT avec generic body
+        // POST with body and NO response
+        public async Task PostRequestWithoutReturn<TBody>(string url, TBody body)
+        {
+            StringContent? content = null;
+            if (body != null)
+            {
+                var json = JsonSerializer.Serialize(body, _options);
+                content = new StringContent(json, Encoding.UTF8, "application/json");
+            }
+
+            var response = await _client.PostAsync(_baseUrl + url, content);
+            response.EnsureSuccessStatusCode();
+        }
+
+        // POST without body and NO response
+        public async Task PostRequestWithoutReturn(string url)
+        {
+            var response = await _client.PostAsync(_baseUrl + url, null);
+            response.EnsureSuccessStatusCode();
+        }
+        #endregion
+
+        #region PUT
+        // PUT with body and expecting response
         public async Task<TSend> PutRequest<TBody>(string url, TBody body)
         {
             var json = JsonSerializer.Serialize(body, _options);
@@ -107,11 +130,41 @@ namespace BookHubGateway.Infrastructure.HttpClients
                    ?? throw new Exception("Result null");
         }
 
-        // DELETE request
+        // PUT without body but expecting response
+        public async Task<TSend> PutRequest(string url)
+        {
+            var response = await _client.PutAsync(_baseUrl + url, null);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TSend>(result, _options)
+                   ?? throw new Exception("Result null");
+        }
+
+        // PUT with body and NO response
+        public async Task PutRequestWithoutReturn<TBody>(string url, TBody body)
+        {
+            var json = JsonSerializer.Serialize(body, _options);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _client.PutAsync(_baseUrl + url, content);
+            response.EnsureSuccessStatusCode();
+        }
+
+        // PUT without body and NO response
+        public async Task PutRequestWithoutReturn(string url)
+        {
+            var response = await _client.PutAsync(_baseUrl + url, null);
+            response.EnsureSuccessStatusCode();
+        }
+        #endregion
+
+        #region DELETE
         public async Task DeleteRequest(string url)
         {
             var response = await _client.DeleteAsync(_baseUrl + url);
             response.EnsureSuccessStatusCode();
         }
+        #endregion
     }
 }
