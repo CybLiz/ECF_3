@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
 
 namespace BookHubGateway.Infrastructure.HttpClients
 {
@@ -50,6 +51,12 @@ namespace BookHubGateway.Infrastructure.HttpClients
             return JsonSerializer.Deserialize<TSend>(json, _options)
                    ?? throw new Exception("Result null");
         }
+
+        public void SetAuthorizationHeader(string token)
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Replace("Bearer ", ""));
+        }
+
         // POST avec body
         public async Task<TSend> PostRequest<TBody>(string url, TBody body)
         {

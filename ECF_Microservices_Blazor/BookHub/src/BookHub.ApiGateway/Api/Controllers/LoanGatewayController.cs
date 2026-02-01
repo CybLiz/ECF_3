@@ -12,7 +12,7 @@ namespace BookHubGateway.Controllers
 
         public LoanGatewayController()
         {
-            _loanClient = new RestClient<LoanDto, CreateLoanDto>("http://localhost:5012/api/loans");
+            _loanClient = new RestClient<LoanDto, CreateLoanDto>("http://localhost:5003/api/loans");
         }
 
         [HttpGet]
@@ -30,8 +30,11 @@ namespace BookHubGateway.Controllers
         [HttpPost]
         public async Task<LoanDto> Create([FromBody] CreateLoanDto dto)
         {
+            var token = Request.Headers["Authorization"].ToString();
+            _loanClient.SetAuthorizationHeader(token);
             return await _loanClient.PostRequest("", dto);
         }
+
         [HttpGet("overdue")]
         public async Task<List<LoanDto>> GetOverdue()
         {

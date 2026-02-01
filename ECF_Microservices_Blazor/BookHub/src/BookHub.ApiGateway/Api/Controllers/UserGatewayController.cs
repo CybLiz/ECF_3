@@ -15,7 +15,7 @@ namespace BookHub.Gateway.Api.Controllers
 
         public UserGatewayController()
         {
-            var baseUrl = "http://localhost:5013/api/users";
+            var baseUrl = "http://localhost:5002/api/users";
 
             _userClient = new RestClient<UserDto, object>(baseUrl);
             _userRegisterClient = new RestClient<UserDto, CreateUserDto>($"{baseUrl}/register");
