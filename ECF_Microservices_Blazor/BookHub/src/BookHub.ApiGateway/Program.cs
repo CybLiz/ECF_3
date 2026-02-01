@@ -2,6 +2,7 @@ using BookHub.Shared.DTOs;
 using BookHubGateway.Controllers;
 using BookHubGateway.Infrastructure.HttpClients;
 using System.Text.Json.Serialization;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,21 +17,39 @@ builder.Services.AddControllers()
 
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
+
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "BookHub Gateway API", Version = "v1" });
-});
 
-// CORS : autoriser toutes les origines pour tests
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
+    // JWT Authorization dans Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Entrez 'Bearer {votre token}' pour authentifier"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
     });
 });
+
 
 // HttpClientFactory (optionnel, utile si tu veux injecter HttpClient dans tes RestClients)
 builder.Services.AddHttpClient();

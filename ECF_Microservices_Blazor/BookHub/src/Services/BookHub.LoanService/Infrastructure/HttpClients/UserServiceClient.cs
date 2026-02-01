@@ -1,6 +1,9 @@
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using BookHub.LoanService.Domain.Ports;
 using BookHub.Shared.DTOs;
+using Microsoft.Extensions.Logging;
 
 namespace BookHub.LoanService.Infrastructure.HttpClients;
 
@@ -15,11 +18,24 @@ public class UserServiceClient : IUserServiceClient
         _logger = logger;
     }
 
-    public async Task<UserDto?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<UserDto?> GetUserAsync(Guid userId, string token, CancellationToken cancellationToken = default)
     {
         try
         {
-            return await _httpClient.GetFromJsonAsync<UserDto>($"api/users/{userId}", cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, $"api/users/{userId}");
+
+            if (!string.IsNullOrEmpty(token))
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Replace("Bearer ", ""));
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to get user {UserId}. Status: {StatusCode}", userId, response.StatusCode);
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<UserDto>(cancellationToken: cancellationToken);
         }
         catch (HttpRequestException ex)
         {

@@ -1,8 +1,132 @@
 @page "/my-loans"
+@using BookHub.Shared.DTOs
 
 <PageTitle>Mes Emprunts - BookHub</PageTitle>
 
 <h1>Mes Emprunts</h1>
 
+<h3>Emprunts en cours</h3>
+@if (activeLoans == null || !activeLoans.Any())
+{
+    <div class="alert alert-info">Aucun emprunt en cours!</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Livre</th>
+                <th>Date d'emprunt</th>
+                <th>Date de retour</th>
+                <th>Statut</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var loan in activeLoans)
+            {
+                <tr>
+                    <td>@loan.BookTitle</td>
+                    <td>@loan.LoanDate.ToShortDateString()</td>
+                    <td>@loan.DueDate.ToShortDateString()</td>
+                    <td>@loan.Status</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" @onclick="() => ReturnLoan(loan)">
+                            Retourner
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h3>Historique des emprunts</h3>
+@if (pastLoans == null || !pastLoans.Any())
+{
+    <div class="alert alert-info">Aucun emprunt passé.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Livre</th>
+                <th>Date d'emprunt</th>
+                <th>Date de retour</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var loan in pastLoans)
+            {
+                <tr>
+                    <td>@loan.BookTitle</td>
+                    <td>@loan.LoanDate.ToShortDateString()</td>
+                    <td>@loan.ReturnDate?.ToShortDateString()</td>
+                    <td>@loan.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
 @code {
+    private List<LoanDto> activeLoans = new();
+    private List<LoanDto> pastLoans = new();
+
+    protected override void OnInitialized()
+
+    {
+        // Etant la feature d'emprunt non fonctionnelle, je simule des emprunts!'
+        // Emprunts en cours
+        activeLoans.Add(new LoanDto(
+            Id: Guid.NewGuid(),
+            UserId: Guid.NewGuid(),
+            BookId: Guid.NewGuid(),
+            BookTitle: "Livre Actif",
+            UserEmail: "test@bookhub.com",
+            LoanDate: DateTime.Now.AddDays(-2),
+            DueDate: DateTime.Now.AddDays(12),
+            ReturnDate: null,
+            Status: BookHub.Shared.DTOs.LoanStatus.Active,
+            PenaltyAmount: 0
+        ));
+
+        // Historique des emprunts
+        pastLoans.Add(new LoanDto(
+            Id: Guid.NewGuid(),
+            UserId: Guid.NewGuid(),
+            BookId: Guid.NewGuid(),
+            BookTitle: "Livre Ancien 1",
+            UserEmail: "test@bookhub.com",
+            LoanDate: DateTime.Now.AddMonths(-2),
+            DueDate: DateTime.Now.AddMonths(-2).AddDays(14),
+            ReturnDate: DateTime.Now.AddMonths(-2).AddDays(14),
+            Status: BookHub.Shared.DTOs.LoanStatus.Returned,
+            PenaltyAmount: 0
+        ));
+
+        pastLoans.Add(new LoanDto(
+            Id: Guid.NewGuid(),
+            UserId: Guid.NewGuid(),
+            BookId: Guid.NewGuid(),
+            BookTitle: "Livre Ancien 2",
+            UserEmail: "test@bookhub.com",
+            LoanDate: DateTime.Now.AddMonths(-1),
+            DueDate: DateTime.Now.AddMonths(-1).AddDays(14),
+            ReturnDate: DateTime.Now.AddMonths(-1).AddDays(14),
+            Status: BookHub.Shared.DTOs.LoanStatus.Returned,
+            PenaltyAmount: 0
+        ));
+    }
+
+    private void ReturnLoan(LoanDto loan)
+    {
+        Console.WriteLine($"[TEST] Retour du livre : {loan.BookTitle}");
+
+        // Mise à jour locale
+        activeLoans.Remove(loan);
+        pastLoans.Add(loan with { Status = BookHub.Shared.DTOs.LoanStatus.Returned, ReturnDate = DateTime.Now });
+    }
 }

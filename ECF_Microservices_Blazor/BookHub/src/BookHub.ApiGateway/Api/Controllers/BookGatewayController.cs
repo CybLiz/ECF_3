@@ -12,7 +12,7 @@ namespace BookHubGateway.Controllers
 
         public BookGatewayController()
         {
-            _bookClient = new RestClient<BookDto, CreateBookDto>("http://localhost:5001/api/books");
+            _bookClient = new RestClient<BookDto, CreateBookDto>("http://localhost:5011/api/books");
         }
 
         [HttpGet]

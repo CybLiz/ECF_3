@@ -12,7 +12,7 @@ namespace BookHubGateway.Controllers
 
         public LoanGatewayController()
         {
-            _loanClient = new RestClient<LoanDto, CreateLoanDto>("http://localhost:5003/api/loans");
+            _loanClient = new RestClient<LoanDto, CreateLoanDto>("http://localhost:5012/api/loans");
         }
 
         [HttpGet]

@@ -48,12 +48,31 @@ public class LoansController : ControllerBase
         return Ok(loans);
     }
 
+    /*   [HttpPost]
+       public async Task<ActionResult<LoanDto>> Create([FromBody] CreateLoanDto dto, CancellationToken cancellationToken)
+       {
+       var loan = await _loanService.CreateLoanAsync(dto, cancellationToken);
+           return CreatedAtAction(nameof(GetById), new { id = loan.Id }, loan);
+       }*/
     [HttpPost]
     public async Task<ActionResult<LoanDto>> Create([FromBody] CreateLoanDto dto, CancellationToken cancellationToken)
     {
-    var loan = await _loanService.CreateLoanAsync(dto, cancellationToken);
-        return CreatedAtAction(nameof(GetById), new { id = loan.Id }, loan);
+        try
+        {
+            // Récupérer le token du header Authorization
+            var token = Request.Headers["Authorization"].ToString();
+
+            // Passer le token au service
+            var loan = await _loanService.CreateLoanAsync(dto, token, cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = loan.Id }, loan);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
+
+
 
     [HttpPut("{id:guid}/return")]
     public async Task<ActionResult<LoanDto>> Return(Guid id, CancellationToken cancellationToken)

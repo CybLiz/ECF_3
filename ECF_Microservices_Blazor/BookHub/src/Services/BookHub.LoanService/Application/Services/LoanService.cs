@@ -11,7 +11,7 @@ public interface ILoanService
     Task<LoanDto?> GetLoanByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<LoanDto>> GetLoansByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<LoanDto>> GetOverdueLoansAsync(CancellationToken cancellationToken = default);
-    Task<LoanDto> CreateLoanAsync(CreateLoanDto dto, CancellationToken cancellationToken = default);
+    Task<LoanDto> CreateLoanAsync(CreateLoanDto dto, string token, CancellationToken cancellationToken = default);
     Task<LoanDto?> ReturnLoanAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
@@ -33,6 +33,8 @@ public class LoanService : ILoanService
         _userClient = userClient;
         _logger = logger;
     }
+
+
 
     public async Task<IEnumerable<LoanDto>> GetAllLoansAsync(CancellationToken cancellationToken = default)
     {
@@ -57,10 +59,9 @@ public class LoanService : ILoanService
         var overdueLoans = await _repository.GetOverdueLoansAsync(cancellationToken);
         return overdueLoans.Select(MapToDto);
     }
-
-    public async Task<LoanDto> CreateLoanAsync(CreateLoanDto dto, CancellationToken cancellationToken = default)
+    public async Task<LoanDto> CreateLoanAsync(CreateLoanDto dto, string token, CancellationToken cancellationToken = default)
     {
-        var user = await _userClient.GetUserAsync(dto.UserId, cancellationToken);
+        var user = await _userClient.GetUserAsync(dto.UserId, token, cancellationToken);
         if (user == null)
             throw new InvalidOperationException("User not found");
 
@@ -84,6 +85,7 @@ public class LoanService : ILoanService
 
         return MapToDto(loan);
     }
+
 
     public async Task<LoanDto?> ReturnLoanAsync(Guid id, CancellationToken cancellationToken = default)
     {
