@@ -2,20 +2,30 @@
 
 ## Loan Service
 
-### GET /api/loans
-Récupère la liste de tous les emprunts.
+ GET /api/loans
+ GET /api/loans/{id}
+ GET /api/loans/user/{userId}
+ GET /api/loans/overdue
+ POST /api/loans
+ PUT /api/loans/{id}/return
 
-### GET /api/loans/{id}
-Récupère un emprunt par son identifiant.
+## User Service
 
-### GET /api/loans/user/{userId}
-Récupère les emprunts d’un utilisateur.
+ GET /api/users
+ GET /api/users/{id}
+ POST /api/users/register
+ POST /api/users/login
+ PUT /api/users/{id}
+ DELETE /api/users/{id}
 
-### GET /api/loans/overdue
-Récupère les emprunts en retard.
 
-### POST /api/loans
-Crée un nouvel emprunt.
+## Book Service
 
-### PUT /api/loans/{id}/return
-Retourne un emprunt.
+ GET /api/books
+ GET /api/books/{id}
+ GET /api/books/search
+ GET /api/books/category/{category}
+ POST /api/books
+ PUT /api/books/{id}
+ POST /api/books/{id}/decrement-availability
+ POST /api/books/{id}/increment-availability

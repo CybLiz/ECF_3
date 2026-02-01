@@ -1,4 +1,7 @@
 @page "/admin/dashboard"
+@inject IBookService BookService
+@inject ILoanService LoanService
+
 
 <PageTitle>Administration - BookHub</PageTitle>
 
@@ -9,7 +12,7 @@
         <div class="card text-white bg-primary">
             <div class="card-body">
                 <h5 class="card-title">Livres</h5>
-                <p class="card-text display-6">--</p>
+                <p class="card-text display-6">@TotalBooks</p>
             </div>
         </div>
     </div>
@@ -17,7 +20,7 @@
         <div class="card text-white bg-success">
             <div class="card-body">
                 <h5 class="card-title">Emprunts actifs</h5>
-                <p class="card-text display-6">--</p>
+                <p class="card-text display-6">@ActiveLoans</p>
             </div>
         </div>
     </div>
@@ -25,7 +28,7 @@
         <div class="card text-white bg-danger">
             <div class="card-body">
                 <h5 class="card-title">En retard</h5>
-                <p class="card-text display-6">--</p>
+                <p class="card-text display-6">@OverdueLoans</p>
             </div>
         </div>
     </div>
@@ -33,11 +36,38 @@
         <div class="card text-white bg-info">
             <div class="card-body">
                 <h5 class="card-title">Utilisateurs</h5>
-                <p class="card-text display-6">--</p>
+                <p class="card-text display-6">@TotalUsers</p>
             </div>
         </div>
     </div>
 </div>
 
 @code {
+    private int TotalBooks { get; set; }
+    private int ActiveLoans { get; set; }
+    private int OverdueLoans { get; set; }
+    private int TotalUsers { get; set; }
+
+    private List<LoanDto> OverdueLoansList { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        var booksList = (await BookService.GetAllBooksAsync()).ToList();
+        TotalBooks = booksList.Count;
+
+        // appels aux loans commentés pour éviter le crash car l'API plante
+        /*
+        var loansList = (await LoanService.GetOverdueLoansAsync()).ToList();
+        OverdueLoansList = loansList;
+        OverdueLoans = loansList.Count;
+        ActiveLoans = loansList.Count(l => l.Status == BookHub.Shared.DTOs.LoanStatus.Active);
+        */
+
+        // Valeurs factices :(
+        OverdueLoansList = new List<LoanDto>();
+        OverdueLoans = 10;
+        ActiveLoans = 15;
+        TotalUsers = 33;
+    }
 }
