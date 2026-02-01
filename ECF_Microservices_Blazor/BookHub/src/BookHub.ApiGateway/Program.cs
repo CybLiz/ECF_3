@@ -6,7 +6,20 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Ajouter les services pour les controllers avec JSON options
+//CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5000") 
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); 
+    });
+});
+
+//JSON options pour les controllers
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -14,16 +27,11 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
-
-// Swagger / OpenAPI
+//Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
-
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "BookHub Gateway API", Version = "v1" });
-
-    // JWT Authorization dans Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -33,7 +41,6 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Description = "Entrez 'Bearer {votre token}' pour authentifier"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -50,13 +57,12 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
-// HttpClientFactory (optionnel, utile si tu veux injecter HttpClient dans tes RestClients)
+//HttpClientFactory pour RestClients
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Middleware Swagger en développement
+//Middleware Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -66,16 +72,13 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Middleware HTTPS
 app.UseHttpsRedirection();
 
-// Middleware CORS
-app.UseCors();
+//Middleware CORS **avant UseAuthorization et MapControllers**
+app.UseCors("AllowFrontend");
 
-// Middleware Authorization (si tu ajoutes Auth plus tard)
 app.UseAuthorization();
 
-// Mapping des controllers
 app.MapControllers();
 
 app.Run();

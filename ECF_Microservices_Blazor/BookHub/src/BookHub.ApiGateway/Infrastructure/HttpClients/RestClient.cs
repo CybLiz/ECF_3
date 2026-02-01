@@ -52,10 +52,17 @@ namespace BookHubGateway.Infrastructure.HttpClients
                    ?? throw new Exception("Result null");
         }
 
-        public void SetAuthorizationHeader(string token)
+        public void SetAuthorizationHeader(string? authorizationHeader)
         {
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Replace("Bearer ", ""));
+            _client.DefaultRequestHeaders.Authorization = null;
+
+            if (!string.IsNullOrWhiteSpace(authorizationHeader))
+            {
+                _client.DefaultRequestHeaders.Authorization =
+                    AuthenticationHeaderValue.Parse(authorizationHeader);
+            }
         }
+
 
         // POST avec body
         public async Task<TSend> PostRequest<TBody>(string url, TBody body)
